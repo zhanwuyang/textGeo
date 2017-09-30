@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<meta id="viewport" name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+	<script src="js/three.js"></script>
+	<script src="js/stats.min.js"></script>
+	<script src="js/TweenMax.min.js"></script>
+	<script src="js/OrbitControls.js"></script>
+	<style>
+		*{
+			margin:0;
+			padding:0;
+		}
+		body{
+			width:100%;
+			height:100%;
+			overflow: hidden;
+		}
+	</style>
+</head>
+<body>
+	<div id='box'></div>
+	<script>
+		var ME = function(){
+			this.arr = [];
+			this.arr2 = [];
+			this.width = window.innerWidth;
+			this.height = window.innerHeight;
+			this.scene = new THREE.Scene();
+			this.camera = new THREE.PerspectiveCamera( 50, this.width/this.height, 0.1, 1000 );
+			this.camera.position.set(0,0,10);
+			this.group = new THREE.Group()
+			this.controls = new THREE.OrbitControls(this.camera);
+			this.renderer = new THREE.WebGLRenderer();
+			this.box = document.getElementById('box');
+			this.stats = new Stats();
+			this.point = 0;
+			this.define();
+			this.jsonload();
+
+			this.init();
+		};
+		ME.prototype = {
+			init:function(){
+				this.renderer.setSize(this.width,this.height);
+				this.box.appendChild(this.renderer.domElement);
+				this.box.appendChild(this.stats.domElement);
+				this.statsFn();//stats
+				this.render();//render函数
+			},
+			define:function(){
+				this.loader = new THREE.JSONLoader();
+			},
+			jsonload:function(){
+				var that = this;
+				this.loader.load('geo/f5.js',function(geo){
+					console.log(geo.vertices);
+					that.point  = geo.vertices;
+					that.arr = geo.vertices;
+					that.mash(geo);
+				})
+			},
+			mash:function(geo){
+				this.createSphere();
+				var p = new THREE.SphereGeometry(0.3,12,12);
+				for(var i = 0;i<this.point.length;i++){
+					m = new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,side:THREE.DoubleSide});
+					var mesh = new THREE.Mesh(p,m);
+					mesh.position.set(this.arr2[i].x,this.arr2[i].y,this.arr2[i].z)
+					mesh.scale.set(0.1,0.1,0.1);
+					TweenMax.to(mesh.position,3*Math.random(),{x:this.arr[i].x-15,y:this.arr[i].y-7,z:this.arr[i].z});
+					// TweenMax.to(this.camera.position,3,{x:0,y:0,z:150,onComplete:function(){
+					// 	// TweenMax.to(this.camera.position,4,{x:0,y:0,z:10,onComplete:function(){
+					// 	// 	// cameraLock = true;
+					// 	// }})
+					// }});
+					TweenMax.to(mesh.material,2*Math.random(),{opacity:1});
+					TweenMax.to(mesh.position,5*Math.random(),{x:this.arr2[i].x,y:this.arr2[i].y,z:this.arr2[i].z,delay:4,ease:Expo.easeOut});
+					TweenMax.to(mesh.material,5*Math.random(),{opacity:0,delay:4.1});
+					this.group.add(mesh)
+				}
+				this.group.rotation.x = -4;//叶嘉惠
+				this.group.position.set(15,-5,0)
+				this.scene.add(this.group)
+				// var material = new THREE.PointsMaterial( { color: 0xffffff ,size:0.1} );
+
+				// var mesh = new THREE.Points( geo, material );
+				// mesh.rotation.set(2,0,0)
+				// this.scene.add(mesh)
+			},
+			statsFn:function(){
+				this.stats.domElement.style.position = 'absolute';
+				this.stats.domElement.style.left = '0px';
+				this.stats.domElement.style.top = '0px';
+			},
+			createSphere:function(){
+				var geo = new THREE.Geometry();
+				var radius = 100
+				for(var i = 0;i<this.point.length;i++){
+					var a = Math.random()*360;
+					var b = Math.random()*360;
+					geo.vertices.push(new THREE.Vector3( radius*Math.sin(a)*Math.cos(b), radius*Math.sin(a)*Math.sin(b), radius*Math.cos(a) ))
+				}
+				this.arr2 = geo.vertices;
+				console.log('球的点'+this.arr2.length)
+			},
+			render:function(){
+				var that = this;
+				function render(){
+					requestAnimationFrame(render);
+					that.stats.update();
+					that.controls.update();
+					that.renderer.render(that.scene,that.camera);
+				}
+				render();
+			}
+		}
+		var _m = new ME();
+	</script>
+</body>
+</html>
